@@ -4,6 +4,9 @@ Cryptopals Set 1, Challenge 4; Finding XOR-encrypted string
 One of the 60-character strings in the given file
 has been encrypted by single character XOR. Find it.
 """
+import sys
+
+sys.path.append("..")
 from collections import namedtuple
 from utils import single_xor, scorer
 

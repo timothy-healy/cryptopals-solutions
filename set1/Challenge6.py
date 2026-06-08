@@ -4,7 +4,10 @@ Cryptopals Set 1, Challenge 6; Break repeating-key XOR
 The given file in base64 has been encrypted with
 repeating-key XOR. Decrypt it.
 """
+import sys
 import base64
+
+sys.path.append("..")
 from utils import hamming, break_repeating_xor
 
 # Given test case

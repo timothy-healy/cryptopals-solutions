@@ -10,6 +10,9 @@ when XOR'd against
 should produce
 746865206b696420646f6e277420706c6179
 """
+import sys
+
+sys.path.append("..")
 from utils import xor_bytes
 
 target = "746865206b696420646f6e277420706c6179"
