@@ -1,6 +1,7 @@
 """
 Functions used to solve cryptopals challenges.
 """
+from Crypto.Cipher import AES
 from itertools import cycle
 
 # frequency of each letter plus the space character in standard English
@@ -37,7 +38,7 @@ FREQ_DICT = {
 # same frequencies but with the byte values of characters 
 FREQ_BYTES_DICT = {ord(k):v for k,v in FREQ_DICT.items()}
 
-# XOR operators
+# Utilities
 
 def xor_bytes(bytes1, bytes2):
     """
@@ -51,35 +52,6 @@ def xor_bytes(bytes1, bytes2):
         bytes: XOR of the inputs.
     """
     return bytes([b1 ^ b2 for b1, b2 in zip(bytes1, bytes2)])
-
-def single_xor(message, key):
-    """
-    XOR every byte in message against a single character key.
-
-    Args:
-        message: Input bytes to be XORed.
-        key: Single character key as int.
-    
-    Returns:
-        bytes: Result of the XOR operation.
-    """
-    return bytes([b ^ key for b in message])
-
-def repeating_key_xor(message, key):
-    """
-    XOR message against a repeating key.
-
-    Args:
-        message: Input bytes to be XORed.
-        key: Key as bytes.
-
-    Returns:
-        bytes: Result of repeating key XOR.
-    """
-    return bytes([bm ^ bk for bm, bk in zip(message, cycle(key))])
-
-
-# Utilities
 
 def hamming(bytes1, bytes2):
     """
@@ -128,6 +100,101 @@ def pkcs7_pad(block, block_size=16):
     pad = bytes([missing] * missing)
 
     return block + pad
+
+# Encryption/decryption
+
+def single_xor(message, key):
+    """
+    XOR every byte in message against a single character key.
+
+    Args:
+        message: Input bytes to be XORed.
+        key: Single character key as int.
+    
+    Returns:
+        bytes: Result of the XOR operation.
+    """
+    return bytes([b ^ key for b in message])
+
+def repeating_key_xor(message, key):
+    """
+    XOR message against a repeating key.
+
+    Args:
+        message: Input bytes to be XORed.
+        key: Key as bytes.
+
+    Returns:
+        bytes: Result of repeating key XOR.
+    """
+    return bytes([bm ^ bk for bm, bk in zip(message, cycle(key))])
+
+def encrypt_cbc(plaintext, key, iv, block_size=16):
+    """
+    Encrypts a given plaintext in CBC mode.
+
+    Args:
+        plaintext: Plaintext as bytes.
+        key: Key as bytes for the ECB encryption portion.
+        iv: Initialization vector as bytes.
+        block_size: Block size to use, defaults to 16.
+
+    Returns:
+        bytes: Encrypted ciphertext.
+    """
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    # need to pad when encrypting
+    padded_plaintext = pkcs7_pad(plaintext, block_size)
+    num_blocks = len(padded_plaintext) // block_size
+
+    ciphertext = b""
+    for i in range(num_blocks):
+        # for each block, XOR then ECB encrypt
+        curr_plain_block = padded_plaintext[i*block_size:(i+1)*block_size]
+
+        if i == 0:
+            xord_plain = xor_bytes(curr_plain_block, iv)
+        else:
+            prev_cipher_block = ciphertext[(i-1)*block_size:i*block_size]
+            xord_plain = xor_bytes(curr_plain_block, prev_cipher_block)
+        curr_cipher_block = aes_ecb.encrypt(xord_plain)
+        ciphertext += curr_cipher_block
+    
+    return ciphertext
+
+def decrypt_cbc(ciphertext, key, iv, block_size=16):
+    """
+    Decrypts a given ciphertext in CBC mode.
+    Does not strip padding.
+
+    Args:
+        ciphertext: Ciphertext as bytes.
+        key: Key as bytes for the ECB decryption portion.
+        iv: Initialization vector as bytes.
+        block_size: Block size to use, defaults to 16.
+
+    Returns:
+        bytes: Decrypted plaintext.
+    """
+    aes_ecb = AES.new(key, AES.MODE_ECB)
+    # ciphertext already padded
+    num_blocks = len(ciphertext) // block_size
+
+    plaintext = b""
+    for i in range(num_blocks):
+        # for each block, ECB decrypt, then XOR
+        curr_block = ciphertext[i*block_size:(i+1)*block_size]
+        aes_decrypted = aes_ecb.decrypt(curr_block)
+        if i == 0:
+            plaintext_block = xor_bytes(aes_decrypted, iv)
+            plaintext += plaintext_block
+        
+        else:
+            prev_block = ciphertext[(i-1)*block_size:i*block_size]
+            plaintext_block = xor_bytes(aes_decrypted, prev_block)
+            plaintext += plaintext_block
+    
+    return plaintext
 
 # Analysis/scoring tools
 
