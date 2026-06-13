@@ -3,6 +3,7 @@ Functions used to solve cryptopals challenges.
 """
 from Crypto.Cipher import AES
 from itertools import cycle
+import random
 
 # frequency of each letter plus the space character in standard English
 FREQ_DICT = {
@@ -101,6 +102,18 @@ def pkcs7_pad(block, block_size=16):
 
     return block + pad
 
+def gen_rand_key(length=16):
+    """
+    Generates a random key of the given length.
+
+    Args:
+        length: Length of key to be generated as int.
+
+    Returns:
+        bytes: The generated key.
+    """
+    return bytes([random.randint(0,255) for i in range(length)])
+
 # Encryption/decryption
 
 def single_xor(message, key):
@@ -195,6 +208,46 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
             plaintext += plaintext_block
     
     return plaintext
+
+def random_encrypt_aes(plaintext):
+    """
+    Randomly encrypts the given plaintext in either ECB or CBC mode
+    after randomly prepending and appending the plaintext with bytes.
+    For the purpose of checking if detection is done properly (Challenge 11),
+    this returns the mode used.
+
+    Args:
+        plaintext: Plaintext to encrypt as bytes.
+
+    Returns:
+        tuple:
+            - bytes: Resulting ciphertext.
+            - str: Mode used to encrypt.
+    """
+    key = gen_rand_key()
+    prefix_length = random.randint(5, 10)
+    postfix_length = random.randint(5, 10)
+
+    prefix = bytes([random.randint(0,255) for i in range(prefix_length)])
+    postfix = bytes([random.randint(0,255) for i in range(postfix_length)])
+
+    appended_plaintext = prefix + plaintext + postfix
+
+    mode = random.randint(0,1)
+
+    if mode == 0:
+        mode = "ECB"
+        aes_cipher = AES.new(key, AES.MODE_ECB)
+        # pad plaintext before encrypting
+        appended_plaintext = pkcs7_pad(appended_plaintext)
+        ciphertext = aes_cipher.encrypt(appended_plaintext)
+    else:
+        mode = "CBC"
+        # random IV each time
+        iv = bytes([random.randint(0, 255) for i in range(16)])
+        ciphertext = encrypt_cbc(appended_plaintext, key, iv)
+
+    return ciphertext, mode
 
 # Analysis/scoring tools
 
@@ -339,3 +392,19 @@ def detect_ecb(candidate, block_size=16):
                 # only care about finding one identical pair in the candidate, not all of them
                 return True
     return False
+
+def detect_ecb_cbc(ciphertext):
+    """
+    Detects whether the given ciphertext was encrypted in
+    ECB or CBC mode.
+
+    Args:
+        ciphertext: Ciphertext as bytes.
+
+    Returns:
+        str: "ECB" if ECB mode detected, "CBC" otherwise.
+    """
+    if detect_ecb(ciphertext):
+        return "ECB"
+    else:
+        return "CBC"
