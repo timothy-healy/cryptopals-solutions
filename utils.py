@@ -102,6 +102,20 @@ def pkcs7_pad(block, block_size=16):
 
     return block + pad
 
+def strip_pkcs7(block):
+    """
+    Strips padding of PKCS#7 padding scheme.
+
+    Args:
+        block: The padded bytes to be stripped.
+
+    Returns:
+        bytes: The original bytes stripped of padding.
+    """
+    length = len(block)
+    num_padding = block[-1]
+    return block[:length-num_padding]
+
 def gen_rand_key(length=16):
     """
     Generates a random key of the given length.
@@ -178,7 +192,6 @@ def encrypt_cbc(plaintext, key, iv, block_size=16):
 def decrypt_cbc(ciphertext, key, iv, block_size=16):
     """
     Decrypts a given ciphertext in CBC mode.
-    Does not strip padding.
 
     Args:
         ciphertext: Ciphertext as bytes.
@@ -207,7 +220,9 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
             plaintext_block = xor_bytes(aes_decrypted, prev_block)
             plaintext += plaintext_block
     
-    return plaintext
+    length = len(plaintext)
+    num_padding = plaintext[-1]
+    return plaintext[:length-num_padding]
 
 def random_encrypt_aes(plaintext):
     """
