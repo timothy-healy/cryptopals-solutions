@@ -100,14 +100,14 @@ def decrypt_parse(ciphertext):
     return parse(profile)
 
 
-
+### Given Tests ###
 print(parse("foo=bar&baz=qux&zap=zazzle"))
 user_profile = profile_for("foo@bar.com")
 # metacharacter rejection
 print("Profile with metacharacters:")
 print(profile_for("foo@bar.com&role=admin"))
 
-
+### Round Trip Test ###
 print("Encryption/decryption loop check:")
 encrypted_profile = encrypt(user_profile)
 print(encrypted_profile)
@@ -115,7 +115,7 @@ decrypted_profile = decrypt_parse(encrypted_profile)
 print(decrypted_profile)
 
 
-
+### Attack ###
 # 13 character email makes role= end a block
 email = "louie@woo.com"
 

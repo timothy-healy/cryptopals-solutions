@@ -9,6 +9,8 @@ import sys
 sys.path.append("..")
 from utils import random_encrypt_aes, detect_ecb_cbc
 
+
+### Attack ###
 # Using 43 of the same byte consecutively guarantees second and third block are identical
 # Even after the random prepending/appending
 # Allows for ECB to be easily detected
@@ -18,6 +20,7 @@ detected = detect_ecb_cbc(ciphertext)
 print(f"Detected: {detected}")
 print(f"Correct: {detected == actual_mode}")
 
+### More Checks ###
 # Do many tests to ensure not getting lucky
 print("\n10,000 tests:")
 for i in range(10000):
