@@ -14,11 +14,13 @@ from utils import single_xor, scorer
 BestResults = namedtuple("BestResults", ["line", "candidate", "score", "key"])
 BestKey = namedtuple("BestKey", ["score", "key"])
 with open("Challenge4.txt", "r") as candidates:
-    best_for_all = BestResults(0, "", float("-inf"), 0) # track highest performing string
+    # track highest performing string
+    best_for_all = BestResults(0, "", float("-inf"), 0)
 
     for line, candidate in enumerate(candidates, 1):
         candidate = candidate.strip()
-        best_for_candidate = BestKey(float("-inf"), 0) # tracks best score and corresponding key for a particular string
+        # tracks best score and corresponding key for a particular string
+        best_for_candidate = BestKey(float("-inf"), 0) 
 
         # check all possible keys for each string in the file
         for key in range(256):
