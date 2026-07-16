@@ -220,9 +220,7 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
             plaintext_block = xor_bytes(aes_decrypted, prev_block)
             plaintext += plaintext_block
     
-    length = len(plaintext)
-    num_padding = plaintext[-1]
-    return plaintext[:length-num_padding]
+    return strip_pkcs7(plaintext)
 
 def random_encrypt_aes(plaintext):
     """
