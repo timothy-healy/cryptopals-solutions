@@ -4,6 +4,7 @@ Functions used to solve cryptopals challenges.
 from Crypto.Cipher import AES
 from itertools import cycle
 import random
+import secrets
 
 # frequency of each letter plus the space character in standard English
 FREQ_DICT = {
@@ -126,7 +127,7 @@ def gen_rand_key(length=16):
     Returns:
         bytes: The generated key.
     """
-    return bytes([random.randint(0,255) for i in range(length)])
+    return secrets.token_bytes(length)
 
 # Encryption/decryption
 
@@ -257,7 +258,7 @@ def random_encrypt_aes(plaintext):
     else:
         mode = "CBC"
         # random IV each time
-        iv = bytes([random.randint(0, 255) for i in range(16)])
+        iv = secrets.token_bytes(16)
         ciphertext = encrypt_cbc(appended_plaintext, key, iv)
 
     return ciphertext, mode
