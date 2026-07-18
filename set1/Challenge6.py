@@ -17,7 +17,7 @@ from utils import hamming, break_repeating_xor
 test1 = b"this is a test"
 test2 = b"wokka wokka!!!"
 # Hamming distance should be 37
-print(f"Hamming test returns: {hamming(test1, test2)}")
+assert hamming(test1, test2) == 37
 
 
 ### Attack ###
