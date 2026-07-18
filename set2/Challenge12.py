@@ -5,14 +5,13 @@ Create new oracle function that appends the given base 64 string to the plaintex
 encrypts under ECB mode using a consistent, unknown key.
 Decrypt this given string using repeated calls to the oracle function.
 """
-import random
 from Crypto.Cipher import AES
 import base64
 import sys
 sys.path.append("..")
-from utils import detect_ecb, pkcs7_pad
+from utils import detect_ecb, pkcs7_pad, gen_rand_key
 
-RAND_KEY = bytes([random.randint(0, 255) for i in range(16)])
+RAND_KEY = gen_rand_key()
 AES_CIPHER = AES.new(RAND_KEY, AES.MODE_ECB)
 APPEND_B64 = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
 APPEND_BYTES = base64.b64decode(APPEND_B64)

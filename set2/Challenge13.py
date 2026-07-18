@@ -7,15 +7,14 @@ Generate a random AES key. Encrypt the user profile under the key; "provide" tha
 Decrypt the encoded user profile and parse it.
 Using only the user input to profile_for() and the ciphertexts themselves, make a role=admin profile.
 """
-import random
 from Crypto.Cipher import AES
 import sys
 sys.path.append("..")
-from utils import pkcs7_pad, strip_pkcs7
+from utils import pkcs7_pad, strip_pkcs7, gen_rand_key
 
 # assuming attacker knows this value
 UID = 10
-KEY = bytes([random.randint(0, 255) for i in range(16)])
+KEY = gen_rand_key()
 AES_CIPHER = AES.new(KEY, AES.MODE_ECB)
 
 
