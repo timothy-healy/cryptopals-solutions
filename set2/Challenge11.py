@@ -18,7 +18,8 @@ chosen_plaintext = b"a" * 43
 ciphertext, actual_mode = random_encrypt_aes(chosen_plaintext)
 detected = detect_ecb_cbc(ciphertext)
 print(f"Detected: {detected}")
-print(f"Correct: {detected == actual_mode}")
+assert detected == actual_mode
+print("Correct")
 
 ### More Checks ###
 # Do many tests to ensure not getting lucky
@@ -26,6 +27,5 @@ print("\n10,000 tests:")
 for i in range(10000):
     ciphertext, actual_mode = random_encrypt_aes(chosen_plaintext)
     detected = detect_ecb_cbc(ciphertext)
-    if detected != actual_mode:
-        print("Incorrect")
+    assert detected == actual_mode, f"Failed on iteration {i}"
 print("Done")

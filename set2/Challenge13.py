@@ -100,11 +100,12 @@ def decrypt_parse(ciphertext):
 
 
 ### Given Tests ###
-print(parse("foo=bar&baz=qux&zap=zazzle"))
+assert parse("foo=bar&baz=qux&zap=zazzle") == {"foo": "bar", "baz": "qux", "zap": "zazzle"}, "parse broken"
 user_profile = profile_for("foo@bar.com")
+target = "email=foo@bar.com&uid=10&role=user"
+assert user_profile == target, "profile_for broken"
 # metacharacter rejection
-print("Profile with metacharacters:")
-print(profile_for("foo@bar.com&role=admin"))
+assert profile_for("foo@bar.com&role=admin") == "", "Metacharacter rejection broken"
 
 ### Round Trip Test ###
 print("Encryption/decryption loop check:")
@@ -112,6 +113,7 @@ encrypted_profile = encrypt(user_profile)
 print(encrypted_profile)
 decrypted_profile = decrypt_parse(encrypted_profile)
 print(decrypted_profile)
+assert parse(user_profile) == decrypted_profile, "Round trip failed"
 
 
 ### Attack ###
@@ -128,4 +130,7 @@ admin_ciphertext = encrypt(profile_for(admin_email))
 # need 2 blocks from regular and the second from admin
 # for email=louie@woo.com&uid=10&role= plus admin and padding
 created_ciphertext = regular_ciphertext[:32] + admin_ciphertext[16:32]
-print(decrypt_parse(created_ciphertext))
+admin_profile = decrypt_parse(created_ciphertext)
+assert admin_profile["role"] == "admin", "Role is not admin"
+print("Role is admin:")
+print(admin_profile)

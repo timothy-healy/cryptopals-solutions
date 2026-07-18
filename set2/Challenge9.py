@@ -10,9 +10,12 @@ from utils import pkcs7_pad
 
 # given test
 test = b"YELLOW SUBMARINE"
+target = "YELLOW SUBMARINE\x04\x04\x04\x04"
 # should need 4
+result = pkcs7_pad(test, 20)
 print("Given test to pad to 20:")
-print(pkcs7_pad(test, 20))
+print(result)
+assert result == target
 
 # shorter test
 print("\nShorter test:")

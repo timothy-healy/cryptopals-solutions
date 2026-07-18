@@ -31,6 +31,7 @@ ciphertext = encrypt_cbc(plaintext, KEY, IV, BLOCK_SIZE)
 print(ciphertext)
 decrypted = decrypt_cbc(ciphertext, KEY, IV, BLOCK_SIZE)
 print(decrypted)
+assert plaintext == decrypted
 
 ## Already Full Block ##
 print("\nFull block test:")
@@ -39,6 +40,7 @@ ciphertext = encrypt_cbc(plaintext, KEY, IV, BLOCK_SIZE)
 print(ciphertext)
 decrypted = decrypt_cbc(ciphertext, KEY, IV, BLOCK_SIZE)
 print(decrypted)
+assert plaintext == decrypted
 
 ## Multiples Full Blocks ##
 print("\nMultiple full blocks test:")
@@ -47,3 +49,4 @@ ciphertext = encrypt_cbc(plaintext, KEY, IV, BLOCK_SIZE)
 print(ciphertext)
 decrypted = decrypt_cbc(ciphertext, KEY, IV, BLOCK_SIZE)
 print(decrypted)
+assert plaintext == decrypted
