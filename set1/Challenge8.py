@@ -5,7 +5,6 @@ One hex-encoded ciphertext in the given file has been encrypted with ECB.
 Detect it.
 """
 import sys
-
 sys.path.append("..")
 from utils import detect_ecb
 
