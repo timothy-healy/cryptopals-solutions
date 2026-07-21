@@ -383,6 +383,29 @@ def break_repeating_xor(ciphertext):
 
 # Detection
 
+def detect_block_size(oracle):
+    """
+    Detects the block size being used by the given oracle function.
+
+    Args:
+        oracle: The oracle function to detect.
+
+    Return:
+        int: The block size being used.
+    """
+    # ciphertext is always integer multiple of block size
+    # the amount added to the next biggest ciphertext is block size
+    jump = 0
+    plaintext = b"A"
+    ciphertext = oracle(plaintext)
+    initial_ciphertext_length = len(ciphertext)
+    while jump == 0:
+        plaintext += b"A"
+        ciphertext = oracle(plaintext)
+        ciphertext_length = len(ciphertext)
+        jump = ciphertext_length - initial_ciphertext_length
+    return jump
+
 def detect_ecb(candidate, block_size=16):
     """
     Detects if a string of bytes was encrypted with AES in ECB mode
@@ -393,7 +416,11 @@ def detect_ecb(candidate, block_size=16):
         block_size: Block size to use, defaults to 16.
 
     Returns:
-        bool: True if ECB detected, False otherwise.
+        tuple:
+            - bool: True if ECB detected, False otherwise.
+            - tuple:
+                - int: Block number of the first block.
+                - int: Block number of the identical block.
     """
     candidate_length = len(candidate)
     num_blocks = candidate_length // block_size
@@ -404,8 +431,8 @@ def detect_ecb(candidate, block_size=16):
             block_comparison = candidate[j*block_size:(j+1)*block_size]
             if block == block_comparison:
                 # only care about finding one identical pair in the candidate, not all of them
-                return True
-    return False
+                return True, (i, j)
+    return False, (0,0)
 
 def detect_ecb_cbc(ciphertext):
     """
@@ -418,7 +445,7 @@ def detect_ecb_cbc(ciphertext):
     Returns:
         str: "ECB" if ECB mode detected, "CBC" otherwise.
     """
-    if detect_ecb(ciphertext):
+    if detect_ecb(ciphertext)[0]:
         return "ECB"
     else:
         return "CBC"
