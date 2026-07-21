@@ -16,7 +16,7 @@ with open ("Challenge8.txt", "r") as candidates:
         candidate_hex = candidate_hex.strip()
         candidate = bytes.fromhex(candidate_hex)
 
-        if detect_ecb(candidate):
+        if detect_ecb(candidate)[0]:
             ecb_detected.append((line, candidate))
 
 for line, ciphertext in ecb_detected:
