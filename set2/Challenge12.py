@@ -9,7 +9,7 @@ from Crypto.Cipher import AES
 import base64
 import sys
 sys.path.append("..")
-from utils import detect_ecb, pkcs7_pad, gen_rand_key
+from utils import detect_block_size, detect_ecb, pkcs7_pad, gen_rand_key
 
 RAND_KEY = gen_rand_key()
 AES_CIPHER = AES.new(RAND_KEY, AES.MODE_ECB)
@@ -32,34 +32,37 @@ def ecb_oracle(plaintext):
     ciphertext = AES_CIPHER.encrypt(appended_plaintext_padded)
     return ciphertext
 
-# detect block size
-# ciphertext is always integer multiple of block size
-# the amount added to the next biggest ciphertext is block size
-jump = 0
-plaintext = b"A"
-ciphertext = ecb_oracle(plaintext)
-initial_ciphertext_length = len(ciphertext)
-while jump == 0:
-    plaintext += b"A"
-    ciphertext = ecb_oracle(plaintext)
-    ciphertext_length = len(ciphertext)
-    jump = ciphertext_length - initial_ciphertext_length
-block_size = jump
+
+block_size = detect_block_size(ecb_oracle)
 
 # detect ecb
 # gurantees two identical blocks
 plaintext = b"A" * (2*block_size)
 ciphertext = ecb_oracle(plaintext)
-if detect_ecb(ciphertext):
+if detect_ecb(ciphertext)[0]:
     # need to know how long the mystery text is
     # this will actually get mystery text plus padding
     # so it as an upper bound on the length
-    target_length = len(ecb_oracle(b""))
+    plaintext = b""
+    target_length = len(ecb_oracle(plaintext))
     num_blocks = target_length // block_size
+
+    # now find the actual length
+    jump = 0
+    while jump == 0:
+        plaintext += b"A"
+        ciphertext = ecb_oracle(plaintext)
+        jump = len(ciphertext) - target_length
+    actual_length = len(ciphertext) - len(plaintext) - block_size
+    last_block_length = actual_length % block_size
+    
     curr_known = b""
     for block_num in range(num_blocks):
         curr_block = b""
         for i in range(block_size):
+            if block_num == num_blocks-1 and i == last_block_length:
+                # done with data, now just at padding
+                break
             short_plaintext = b"A" * (block_size - (i+1))
             chosen_plaintext = short_plaintext + curr_known + curr_block
 
@@ -67,9 +70,6 @@ if detect_ecb(ciphertext):
                              : bytes([b]) for b in range(256)}
             
             correct_byte = possibilities.get(ecb_oracle(short_plaintext)[block_num*block_size:(block_num+1)*block_size])
-            if correct_byte is None:
-                # Reached the end
-                break
             curr_block += correct_byte
         curr_known += curr_block
 
