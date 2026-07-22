@@ -3,7 +3,6 @@ Functions used to solve cryptopals challenges.
 """
 from Crypto.Cipher import AES
 from itertools import cycle
-import random
 import secrets
 
 # frequency of each letter plus the space character in standard English
@@ -45,6 +44,7 @@ FREQ_BYTES_DICT = {ord(k):v for k,v in FREQ_DICT.items()}
 def xor_bytes(bytes1, bytes2):
     """
     XOR two equal length byte strings.
+    Originally written for Set 1, Challenge 2.
 
     Args:
         bytes1: First byte string.
@@ -55,40 +55,11 @@ def xor_bytes(bytes1, bytes2):
     """
     return bytes([b1 ^ b2 for b1, b2 in zip(bytes1, bytes2)])
 
-def hamming(bytes1, bytes2):
-    """
-    Calculates the hamming distance of two equal length byte strings.
-
-    Args:
-        bytes1: First byte string.
-        bytes2: Second byte string, same length as first.
-
-    Returns:
-        int: The calculated hamming distance between the inputs.
-    """
-    distance = 0
-    # 1 in XOR output means bits were different
-    xor = xor_bytes(bytes1, bytes2)
-    for b in xor:
-        distance += bin(b).count("1")
-    return distance
-
-def transpose(input_bytes, size):
-    """
-    Transposes a string of bytes using the given size.
-
-    Args:
-        input_bytes: String of bytes to be transposed.
-        size: Size of each transposed block.
-    
-    Returns:
-        list: Each element is a transposed block of bytes.
-    """
-    return [input_bytes[i::size] for i in range(size)]
 
 def pkcs7_pad(block, block_size=16):
     """
     Pads given input to the desired block size according to PKCS#7 padding scheme.
+    Originally written for Set 2, Challenge 9.
 
     Args:
         block: The bytes to be padded.
@@ -106,6 +77,7 @@ def pkcs7_pad(block, block_size=16):
 def strip_pkcs7(block):
     """
     Strips padding of PKCS#7 padding scheme.
+    Originally written for Set 2, Challenge 14; applied to preceding challenges.
 
     Args:
         block: The padded bytes to be stripped.
@@ -120,6 +92,7 @@ def strip_pkcs7(block):
 def gen_rand_key(length=16):
     """
     Generates a random key of the given length.
+    Consolidated random key generation across multiple challenges.
 
     Args:
         length: Length of key to be generated as int.
@@ -134,6 +107,7 @@ def gen_rand_key(length=16):
 def single_xor(message, key):
     """
     XOR every byte in message against a single character key.
+    Originally written for Set 1, Challenge 3.
 
     Args:
         message: Input bytes to be XORed.
@@ -147,6 +121,7 @@ def single_xor(message, key):
 def repeating_key_xor(message, key):
     """
     XOR message against a repeating key.
+    Originally written for Set 1, Challenge 5.
 
     Args:
         message: Input bytes to be XORed.
@@ -160,6 +135,7 @@ def repeating_key_xor(message, key):
 def encrypt_cbc(plaintext, key, iv, block_size=16):
     """
     Encrypts a given plaintext in CBC mode.
+    Originally written for Set 2, Challenge 10.
 
     Args:
         plaintext: Plaintext as bytes.
@@ -193,6 +169,7 @@ def encrypt_cbc(plaintext, key, iv, block_size=16):
 def decrypt_cbc(ciphertext, key, iv, block_size=16):
     """
     Decrypts a given ciphertext in CBC mode.
+    Originally written for Set 2, Challenge 10.
 
     Args:
         ciphertext: Ciphertext as bytes.
@@ -223,51 +200,12 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
     
     return strip_pkcs7(plaintext)
 
-def random_encrypt_aes(plaintext):
-    """
-    Randomly encrypts the given plaintext in either ECB or CBC mode
-    after randomly prepending and appending the plaintext with bytes.
-    For the purpose of checking if detection is done properly (Challenge 11),
-    this returns the mode used.
-
-    Args:
-        plaintext: Plaintext to encrypt as bytes.
-
-    Returns:
-        tuple:
-            - bytes: Resulting ciphertext.
-            - str: Mode used to encrypt.
-    """
-    key = gen_rand_key()
-    prefix_length = random.randint(5, 10)
-    postfix_length = random.randint(5, 10)
-
-    prefix = bytes([random.randint(0,255) for i in range(prefix_length)])
-    postfix = bytes([random.randint(0,255) for i in range(postfix_length)])
-
-    appended_plaintext = prefix + plaintext + postfix
-
-    mode = random.randint(0,1)
-
-    if mode == 0:
-        mode = "ECB"
-        aes_cipher = AES.new(key, AES.MODE_ECB)
-        # pad plaintext before encrypting
-        appended_plaintext = pkcs7_pad(appended_plaintext)
-        ciphertext = aes_cipher.encrypt(appended_plaintext)
-    else:
-        mode = "CBC"
-        # random IV each time
-        iv = secrets.token_bytes(16)
-        ciphertext = encrypt_cbc(appended_plaintext, key, iv)
-
-    return ciphertext, mode
-
 # Analysis/scoring tools
 
 def scorer(plaintext):
     """
     Scores plaintext based on how much it resembles the English language.
+    Originally written for Set 1, Challenge 3.
 
     Args:
         plaintext: Plaintext to be evaluated as bytes.
@@ -289,41 +227,12 @@ def scorer(plaintext):
         
     return score
 
-def score_keysize(ciphertext):
-    """
-    Scores each key length from 2-40 (inclusive) based on how likely it is the correct
-    length of the repeating key for the cipher.
-
-    Args:
-        ciphertext: Ciphertext as bytes.
-
-    Returns:
-        list: Tuples of (normalized hamming distance, keysize), sorted ascending by distance.
-    """
-    # collect all hamming distances
-    distances = []
-    # trying suggested range of keysizes
-    for keysize in range(2, 41):
-        total = 0
-        num_blocks = len(ciphertext)//keysize
-        # getting hamming distance for all sequential pairs of blocks
-        # rather than only the first few; then taking the average
-        for i in range(num_blocks-1):
-            bytes1 = ciphertext[i*keysize:(i+1)*keysize]
-            bytes2 = ciphertext[(i+1)*keysize:(i+2)*keysize]
-            # divide total distance by keysize to normalize
-            total += hamming(bytes1, bytes2)/keysize
-        average_distance = total/(num_blocks-1)
-        distances.append((average_distance, keysize))
-
-    distances.sort()
-    return distances
-
 # Breaking
 
 def break_single_xor(ciphertext):
     """
     Breaks a single-character XOR cipher.
+    Originally written for Set 1, Challenge 3.
 
     Args:
         ciphertext: Ciphertext as bytes.
@@ -346,46 +255,12 @@ def break_single_xor(ciphertext):
     plaintext = single_xor(ciphertext, best_key)
     return plaintext, best_key
 
-def find_repeating_key(ciphertext, keysize):
-    """
-    Finds the key for a repeating key XOR cipher.
-
-    Args:
-        ciphertext: Ciphertext as bytes.
-        keysize: Length of the repeating key.
-
-    Returns:
-        bytes: The repeating key for the cipher.
-    """
-    transposed_blocks = transpose(ciphertext, keysize)
-    # each block is now a single character XOR problem
-    key = bytes([break_single_xor(block)[1] for block in transposed_blocks])
-    return key
-
-def break_repeating_xor(ciphertext):
-    """
-    Breaks a repeating key XOR cipher.
-
-    Args:
-        ciphertext: Ciphertext as bytes.
-
-    Returns:
-        tuple:
-            - bytes: Decrypted plaintext.
-            - bytes: The repeating key for the cipher.
-    """
-    # find keysize -> find key -> decrypt
-    distances = score_keysize(ciphertext)
-    best_keysize = distances[0][1]
-    key = find_repeating_key(ciphertext, best_keysize)
-    plaintext = repeating_key_xor(ciphertext, key)
-    return plaintext, key
-
 # Detection
 
 def detect_block_size(oracle):
     """
     Detects the block size being used by the given oracle function.
+    Originally written for Set 2, Challenge 12.
 
     Args:
         oracle: The oracle function to detect.
@@ -410,6 +285,7 @@ def detect_ecb(candidate, block_size=16):
     """
     Detects if a string of bytes was encrypted with AES in ECB mode
     by looking for repeated blocks.
+    Originally written for Set 1, Challenge 8.
 
     Args:
         candidate: Possible ciphertext as bytes.
@@ -433,19 +309,3 @@ def detect_ecb(candidate, block_size=16):
                 # only care about finding one identical pair in the candidate, not all of them
                 return True, (i, j)
     return False, (0,0)
-
-def detect_ecb_cbc(ciphertext):
-    """
-    Detects whether the given ciphertext was encrypted in
-    ECB or CBC mode.
-
-    Args:
-        ciphertext: Ciphertext as bytes.
-
-    Returns:
-        str: "ECB" if ECB mode detected, "CBC" otherwise.
-    """
-    if detect_ecb(ciphertext)[0]:
-        return "ECB"
-    else:
-        return "CBC"
