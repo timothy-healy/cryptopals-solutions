@@ -6,34 +6,7 @@ valid PKCS#7 padding, stripping the padding if valid.
 """
 import sys
 sys.path.append("..")
-from utils import strip_pkcs7
-class PKCS7PaddingError(Exception):
-    """Exception raised for invalid PKCS#7 padding"""
-    pass
-
-
-def validate_pkcs7(plaintext):
-    """
-    Validates PKCS#7 padding, and strips it, if valid.
-
-    Args:
-        plaintext: Padded plaintext to validate, as bytes.
-
-    Returns:
-        bytes: The original plaintext with padding stripped.
-    """
-    last_byte = plaintext[-1]
-    if last_byte == 0:
-        raise PKCS7PaddingError("Invalid Padding")
-    
-    if last_byte > len(plaintext):
-        raise PKCS7PaddingError("Invalid Padding")
-
-    for i in range(1, last_byte):
-        if plaintext[-1-i] != last_byte:
-            raise PKCS7PaddingError("Invalid Padding")
-        
-    return strip_pkcs7(plaintext)
+from utils import strip_pkcs7, PKCS7PaddingError, validate_pkcs7
 
 ### Given Tests ###
 ## Correct Test ##
