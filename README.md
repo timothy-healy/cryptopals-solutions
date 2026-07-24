@@ -6,7 +6,7 @@ provide an avenue to learn about the underlying concepts.
 Solutions are written in Python.
 Any reusable function created in the course of a challenge is in utils.py.
 
-**Progress:** Currently through Set 2, Challenge 16.
+**Progress:** Currently through Set 3, Challenge 17.
 
 ## Setup
 ```
@@ -19,6 +19,7 @@ Each challenge is run from inside its set folder since scripts import shared fun
 utils.py         # shared functions reused across challenges
 set1/            # Challenges 1-8
 set2/            # Challenges 9-16
+set3/            # Challenges 17-24
 requirements.txt
 ```
 
