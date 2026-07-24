@@ -1,5 +1,6 @@
 """
-Functions used to solve cryptopals challenges.
+Functions used to solve cryptopals challenges, and reused in other challenges.
+Functions used for only one challenge, remain local to that challenge file.
 """
 from Crypto.Cipher import AES
 from itertools import cycle
@@ -89,6 +90,38 @@ def strip_pkcs7(block):
     num_padding = block[-1]
     return block[:length-num_padding]
 
+class PKCS7PaddingError(Exception):
+    """Exception raised for invalid PKCS#7 padding."""
+    pass
+
+def validate_pkcs7(plaintext, block_size=16):
+    """
+    Validates PKCS#7 padding, and strips it, if valid.
+    Originally written for Set 2, Challenge 15.
+
+    Args:
+        plaintext: Padded plaintext to validate, as bytes.
+        block_size: The int block size the plaintext should be padded to, defaults to 16.
+
+    Returns:
+        bytes: The original plaintext with padding stripped.
+    """
+    if len(plaintext) % block_size != 0:
+        raise PKCS7PaddingError("Invalid Padding")
+    
+    last_byte = plaintext[-1]
+    if last_byte == 0:
+        raise PKCS7PaddingError("Invalid Padding")
+    
+    if last_byte > block_size:
+        raise PKCS7PaddingError("Invalid Padding")
+
+    for i in range(1, last_byte):
+        if plaintext[-1-i] != last_byte:
+            raise PKCS7PaddingError("Invalid Padding")
+        
+    return strip_pkcs7(plaintext)
+
 def gen_rand_key(length=16):
     """
     Generates a random key of the given length.
@@ -166,7 +199,7 @@ def encrypt_cbc(plaintext, key, iv, block_size=16):
     
     return ciphertext
 
-def decrypt_cbc(ciphertext, key, iv, block_size=16):
+def decrypt_cbc(ciphertext, key, iv, block_size=16, strip=True):
     """
     Decrypts a given ciphertext in CBC mode.
     Originally written for Set 2, Challenge 10.
@@ -176,6 +209,7 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
         key: Key as bytes for the ECB decryption portion.
         iv: Initialization vector as bytes.
         block_size: Block size to use, defaults to 16.
+        strip: Bool to strip padding from plaintext, defaults to True.
 
     Returns:
         bytes: Decrypted plaintext.
@@ -197,8 +231,10 @@ def decrypt_cbc(ciphertext, key, iv, block_size=16):
             prev_block = ciphertext[(i-1)*block_size:i*block_size]
             plaintext_block = xor_bytes(aes_decrypted, prev_block)
             plaintext += plaintext_block
-    
-    return strip_pkcs7(plaintext)
+
+    if strip:
+        return strip_pkcs7(plaintext)
+    return plaintext
 
 # Analysis/scoring tools
 
