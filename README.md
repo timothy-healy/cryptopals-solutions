@@ -6,7 +6,7 @@ provide an avenue to learn about the underlying concepts.
 Solutions are written in Python.
 Any reusable function created in the course of a challenge is in utils.py.
 
-**Progress:** Currently through Set 3, Challenge 17.
+**Progress:** Currently through Set 3, Challenge 18.
 
 ## Setup
 ```
